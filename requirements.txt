@@ -1,0 +1,13 @@
+numpy
+scipy
+scikit-image
+opencv-python-headless
+torch
+torchvision
+pyyaml
+matplotlib
+pandas
+tqdm
+pillow
+pytest
+ruff
