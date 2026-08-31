@@ -27,6 +27,7 @@ def predict_folder(seg_ckpt: str, images: str | Path, pixel_spacing_mm: float, o
                    image_size: int | None = None, limit: int | None = None, device: str = "cpu",
                    save_overlays: bool = True) -> pd.DataFrame:
     import matplotlib.pyplot as plt
+
     from cvmeasure.viz import overlay
     out = Path(out)
     (out / "overlays").mkdir(parents=True, exist_ok=True)

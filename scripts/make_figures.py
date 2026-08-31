@@ -6,11 +6,12 @@ walkthrough and training curves.
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from cvmeasure.synth.generator import SheepLoinUltrasoundGenerator, GeneratorConfig
+from cvmeasure.synth.generator import GeneratorConfig, SheepLoinUltrasoundGenerator
 from cvmeasure.viz import overlay, training_curves
 
 OUT = Path("reports/figures")

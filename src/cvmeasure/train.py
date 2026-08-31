@@ -26,7 +26,7 @@ from cvmeasure.models.unet import DiceCELoss, build_segmentation_model
 
 
 def load_config(path: str) -> dict:
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
@@ -45,11 +45,11 @@ def set_seed(seed: int):
 def run(cfg: dict, task: str, run_dir: Path, device: str = "cpu", max_epochs: int | None = None):
     set_seed(cfg.get("seed", 0))
     run_dir.mkdir(parents=True, exist_ok=True)
-    (run_dir / "config.yaml").write_text(yaml.safe_dump(cfg))
+    (run_dir / "config.yaml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
     root = cfg["data"]["root"]
     tr_meta = pd.read_csv(Path(root) / "metadata.csv")
     stats = LoinUltrasoundDataset.compute_target_stats(tr_meta[tr_meta.split == "train"])
-    (run_dir / "target_stats.json").write_text(json.dumps(stats))
+    (run_dir / "target_stats.json").write_text(json.dumps(stats), encoding="utf-8")
 
     ds_tr = LoinUltrasoundDataset(root, "train", augment=cfg["train"].get("augment", True),
                                   seed=cfg.get("seed", 0), image_size=cfg["data"].get("image_size"), target_stats=stats)

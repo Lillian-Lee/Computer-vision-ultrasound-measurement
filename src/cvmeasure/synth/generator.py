@@ -27,11 +27,10 @@ but they are hand-set priors, not measured populations.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict, field
-from typing import Optional
+from dataclasses import asdict, dataclass, field
 
 import numpy as np
-from scipy.ndimage import gaussian_filter, binary_fill_holes
+from scipy.ndimage import binary_fill_holes, gaussian_filter
 from scipy.signal import fftconvolve
 
 BACKGROUND, MUSCLE, FAT = 0, 1, 2
@@ -163,7 +162,7 @@ def _burn_in_ui(img: np.ndarray, rng: np.random.Generator, spacing: float) -> np
     H, W = img.shape
     out = img.copy()
     x0 = W - 4
-    every_px = max(1, int(round(10.0 / spacing)))     # 1 cm ticks
+    every_px = max(1, round(10.0 / spacing))     # 1 cm ticks
     for y in range(0, H, every_px):
         out[y, x0 - 3:x0] = 1.0
     for y in range(0, H, max(1, every_px // 2)):
@@ -180,7 +179,7 @@ def _burn_in_ui(img: np.ndarray, rng: np.random.Generator, spacing: float) -> np
 # Main generator
 # --------------------------------------------------------------------------------------
 class SheepLoinUltrasoundGenerator:
-    def __init__(self, config: Optional[GeneratorConfig] = None, seed: int = 0):
+    def __init__(self, config: GeneratorConfig | None = None, seed: int = 0):
         self.cfg = config or GeneratorConfig()
         self.rng = np.random.default_rng(seed)
 
@@ -195,38 +194,40 @@ class SheepLoinUltrasoundGenerator:
         # fatter animals tend to have more fat, weakly correlated with size
         fat_c = float(np.clip(rng.uniform(*p.fat_c_mm) * (0.75 + 0.5 * t), *p.fat_c_mm))
         harmonics = np.stack([rng.uniform(0.0, 0.05, size=3), rng.uniform(0, 2 * np.pi, size=3)], 1)
-        return dict(
-            emw_mm=emw, emd_mm=emd, fat_c_mm=fat_c,
-            skin_mm=_uniform(rng, p.skin_mm),
-            top_flatness=_uniform(rng, p.top_flatness),
-            harmonics=harmonics.tolist(),
-        )
+        return {
+            "emw_mm": emw,
+            "emd_mm": emd,
+            "fat_c_mm": fat_c,
+            "skin_mm": _uniform(rng, p.skin_mm),
+            "top_flatness": _uniform(rng, p.top_flatness),
+            "harmonics": harmonics.tolist(),
+        }
 
     def sample_frame_params(self) -> dict:
         p, a, rng = self.cfg.anatomy, self.cfg.acquisition, self.rng
-        return dict(
-            tilt_deg=_uniform(rng, p.tilt_deg),
-            lateral_shift_mm=_uniform(rng, p.lateral_shift_mm),
-            probe_pressure=float(rng.uniform(0.9, 1.05)),   # compresses fat slightly
-            gain_db=_uniform(rng, a.gain_db),
-            dynamic_range_db=_uniform(rng, a.dynamic_range_db),
-            speckle_axial_px=_uniform(rng, a.speckle_axial_px),
-            speckle_lateral_px=_uniform(rng, a.speckle_lateral_px),
-            attenuation_db_per_mm=_uniform(rng, a.attenuation_db_per_mm),
-            shadow=bool(rng.random() < a.shadow_prob),
-            shadow_strength=_uniform(rng, a.shadow_strength),
-            contact_loss=bool(rng.random() < a.contact_loss_prob),
-            electronic_noise=_uniform(rng, a.electronic_noise),
-            burn_in_ui=bool(rng.random() < a.burn_in_ui_prob),
-            rim_strength=float(rng.uniform(0.8, 2.4)),
-        )
+        return {
+            "tilt_deg": _uniform(rng, p.tilt_deg),
+            "lateral_shift_mm": _uniform(rng, p.lateral_shift_mm),
+            "probe_pressure": float(rng.uniform(0.9, 1.05)),   # compresses fat slightly
+            "gain_db": _uniform(rng, a.gain_db),
+            "dynamic_range_db": _uniform(rng, a.dynamic_range_db),
+            "speckle_axial_px": _uniform(rng, a.speckle_axial_px),
+            "speckle_lateral_px": _uniform(rng, a.speckle_lateral_px),
+            "attenuation_db_per_mm": _uniform(rng, a.attenuation_db_per_mm),
+            "shadow": bool(rng.random() < a.shadow_prob),
+            "shadow_strength": _uniform(rng, a.shadow_strength),
+            "contact_loss": bool(rng.random() < a.contact_loss_prob),
+            "electronic_noise": _uniform(rng, a.electronic_noise),
+            "burn_in_ui": bool(rng.random() < a.burn_in_ui_prob),
+            "rim_strength": float(rng.uniform(0.8, 2.4)),
+        }
 
     # ---- rendering one frame -------------------------------------------------------------
     def render(self, animal: dict, frame: dict) -> Sample:
         cfg, rng = self.cfg, self.rng
         H = W = cfg.image_size
         sp = cfg.pixel_spacing_mm
-        mm = lambda v: v / sp  # noqa: E731
+        mm = lambda v: v / sp
 
         # geometry (pixels)
         skin_px = mm(animal["skin_mm"])
@@ -242,7 +243,7 @@ class SheepLoinUltrasoundGenerator:
         muscle = binary_fill_holes(muscle)
 
         # fat layer: follows the top of the muscle; outside the muscle it drapes down laterally
-        yy, xx = np.mgrid[0:H, 0:W]
+        yy, _xx = np.mgrid[0:H, 0:W]
         cols = np.arange(W)
         top_of_muscle = np.full(W, np.nan)
         for c in cols:

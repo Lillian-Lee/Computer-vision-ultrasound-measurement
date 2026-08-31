@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -19,11 +20,21 @@ import pandas as pd
 import torch
 from torch.utils.data import DataLoader
 
+from cvmeasure import viz
 from cvmeasure.data.dataset import LoinUltrasoundDataset
 from cvmeasure.measure.measurements import MEASUREMENT_KEYS, MEASUREMENT_LABELS, measure_from_label_map
 from cvmeasure.metrics import agreement_stats, dice_iou_per_class
 from cvmeasure.train import build_model
-from cvmeasure import viz
+
+
+def _console_safe(text: str, encoding: str | None = None) -> str:
+    """Return text that can be printed by a legacy Windows console encoding."""
+    target_encoding = encoding or sys.stdout.encoding or "utf-8"
+    try:
+        text.encode(target_encoding)
+    except (LookupError, UnicodeEncodeError):
+        text = text.translate(str.maketrans({"→": "->", "²": "^2", "−": "-"}))
+    return text.encode(target_encoding, errors="replace").decode(target_encoding)
 
 
 def load_checkpoint(path: str, device: str = "cpu"):
@@ -49,7 +60,7 @@ def run_eval(seg_ckpt: str | None, reg_ckpt: str | None, data_root: str, split: 
         reg_model, ckr = load_checkpoint(reg_ckpt, device)
         image_size = image_size or ckr["cfg"]["data"].get("image_size")
         cand = [Path(reg_ckpt).parent / "target_stats.json", Path(reg_ckpt).parent / "regressor_target_stats.json"]
-        stats = json.loads(next(p for p in cand if p.exists()).read_text())
+        stats = json.loads(next(p for p in cand if p.exists()).read_text(encoding="utf-8"))
 
     ds = LoinUltrasoundDataset(data_root, split, augment=False, image_size=image_size, target_stats=stats)
     dl = DataLoader(ds, batch_size=batch_size, shuffle=False)
@@ -92,7 +103,7 @@ def run_eval(seg_ckpt: str | None, reg_ckpt: str | None, data_root: str, split: 
         metrics["seg_measurements"] = {k: agreement_stats(df[f"seg_{k}"], df[f"true_{k}"]) for k in MEASUREMENT_KEYS}
     if reg_model is not None:
         metrics["reg_measurements"] = {k: agreement_stats(df[f"reg_{k}"], df[f"true_{k}"]) for k in MEASUREMENT_KEYS}
-    (out_dir / "metrics.json").write_text(json.dumps(metrics, indent=2))
+    (out_dir / "metrics.json").write_text(json.dumps(metrics, indent=2), encoding="utf-8")
 
     # ---- figures ---------------------------------------------------------------------
     methods = [m for m, ok in (("seg", seg_model is not None), ("reg", reg_model is not None)) if ok]
@@ -109,8 +120,12 @@ def run_eval(seg_ckpt: str | None, reg_ckpt: str | None, data_root: str, split: 
     lines = [f"### {data_root} / {split} (n={len(df)})", ""]
     if seg_model is not None:
         s = metrics["segmentation"]
-        lines += [f"Segmentation: Dice muscle **{s['dice_muscle']:.3f}** (5th pct {s['dice_muscle_p05']:.3f}), "
-                  f"Dice fat **{s['dice_fat']:.3f}**, frames QC-flagged (muscle touches border): {s['frames_flagged_border']}", ""]
+        segmentation_summary = (
+            f"Segmentation: Dice muscle **{s['dice_muscle']:.3f}** "
+            f"(5th pct {s['dice_muscle_p05']:.3f}), Dice fat **{s['dice_fat']:.3f}**, "
+            f"frames QC-flagged (muscle touches border): {s['frames_flagged_border']}"
+        )
+        lines += [segmentation_summary, ""]
     lines += ["| Measurement | Method | MAE | RMSE | Bias | R² | CCC | LoA (95%) |", "|---|---|---|---|---|---|---|---|"]
     for k in MEASUREMENT_KEYS:
         for m in methods:
@@ -121,8 +136,8 @@ def run_eval(seg_ckpt: str | None, reg_ckpt: str | None, data_root: str, split: 
             lines.append(f"| {MEASUREMENT_LABELS[k]} | {'U-Net → measure' if m == 'seg' else 'CNN regression'} | "
                          f"{a['mae']:.2f} {unit} | {a['rmse']:.2f} | {a['bias']:+.2f} | {a['r2']:.3f} | {a['ccc']:.3f} | "
                          f"[{a['loa_low']:+.2f}, {a['loa_high']:+.2f}] |")
-    (out_dir / "results_table.md").write_text("\n".join(lines) + "\n")
-    print("\n".join(lines))
+    (out_dir / "results_table.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(_console_safe("\n".join(lines)))
     return metrics
 
 

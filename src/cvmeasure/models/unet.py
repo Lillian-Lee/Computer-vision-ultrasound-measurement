@@ -10,8 +10,8 @@ Optionally the encoder can be swapped for an ImageNet-pretrained ResNet-18
 from __future__ import annotations
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 
 class DoubleConv(nn.Module):
@@ -76,7 +76,7 @@ class ResNetUNet(nn.Module):
         s2 = self.l2(s1)                  # /8
         s3 = self.l3(s2)                  # /16
         s4 = self.l4(s3)                  # /32
-        up = lambda t, ref: F.interpolate(t, size=ref.shape[-2:], mode="bilinear", align_corners=False)  # noqa
+        up = lambda t, ref: F.interpolate(t, size=ref.shape[-2:], mode="bilinear", align_corners=False)
         y = self.up4(torch.cat([up(s4, s3), s3], 1))
         y = self.up3(torch.cat([up(y, s2), s2], 1))
         y = self.up2(torch.cat([up(y, s1), s1], 1))

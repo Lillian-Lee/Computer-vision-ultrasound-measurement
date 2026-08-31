@@ -1,5 +1,7 @@
 /data/
 /runs*/
+.venv/
+.uv-cache/
 predictions/
 *.log
 __pycache__/
@@ -8,4 +10,5 @@ __pycache__/
 *.egg-info/
 .ipynb_checkpoints/
 reports/*_lowdata10/figures/
+reports/smoke/
 .ruff_cache/

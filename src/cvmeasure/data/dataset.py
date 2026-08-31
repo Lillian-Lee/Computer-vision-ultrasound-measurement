@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Optional
 
 import cv2
 import numpy as np
@@ -35,7 +34,7 @@ from cvmeasure.measure.measurements import MEASUREMENT_KEYS
 def write_synthetic_dataset(root: str | Path, n_animals: int, seed: int = 0,
                             splits: tuple[float, float, float] = (0.7, 0.15, 0.15),
                             config=None, progress: bool = True) -> pd.DataFrame:
-    from cvmeasure.synth.generator import SheepLoinUltrasoundGenerator, GeneratorConfig
+    from cvmeasure.synth.generator import GeneratorConfig, SheepLoinUltrasoundGenerator
     root = Path(root)
     (root / "images").mkdir(parents=True, exist_ok=True)
     (root / "masks").mkdir(parents=True, exist_ok=True)
@@ -45,8 +44,8 @@ def write_synthetic_dataset(root: str | Path, n_animals: int, seed: int = 0,
     rng = np.random.default_rng(seed + 1)
     animal_ids = np.arange(n_animals)
     rng.shuffle(animal_ids)
-    n_tr = int(round(splits[0] * n_animals))
-    n_va = int(round(splits[1] * n_animals))
+    n_tr = round(splits[0] * n_animals)
+    n_va = round(splits[1] * n_animals)
     split_of = {int(a): "train" for a in animal_ids[:n_tr]}
     split_of.update({int(a): "val" for a in animal_ids[n_tr:n_tr + n_va]})
     split_of.update({int(a): "test" for a in animal_ids[n_tr + n_va:]})
@@ -69,7 +68,7 @@ def write_synthetic_dataset(root: str | Path, n_animals: int, seed: int = 0,
             rows.append(row)
     df = pd.DataFrame(rows)
     df.to_csv(root / "metadata.csv", index=False)
-    (root / "generator_config.json").write_text(json.dumps(cfg.to_dict(), indent=2))
+    (root / "generator_config.json").write_text(json.dumps(cfg.to_dict(), indent=2), encoding="utf-8")
     return df
 
 
@@ -122,9 +121,9 @@ class LoinUltrasoundDataset(Dataset):
     """Yields dict(image [1,H,W] float, mask [H,W] long, targets [4] float (mm units),
     pixel_spacing_mm, id). Works for synthetic and imported real data alike."""
 
-    def __init__(self, root: str | Path, split: Optional[str] = None, augment: bool = False,
-                 seed: int = 0, image_size: Optional[int] = None,
-                 target_stats: Optional[dict] = None):
+    def __init__(self, root: str | Path, split: str | None = None, augment: bool = False,
+                 seed: int = 0, image_size: int | None = None,
+                 target_stats: dict | None = None):
         self.root = Path(root)
         df = pd.read_csv(self.root / "metadata.csv")
         if split is not None:

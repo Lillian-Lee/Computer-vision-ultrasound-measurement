@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from cvmeasure.measure.measurements import measure_from_masks, measure_from_label_map, MEASUREMENT_KEYS
-from cvmeasure.synth.generator import SheepLoinUltrasoundGenerator, GeneratorConfig, MUSCLE, FAT
+from cvmeasure.measure.measurements import MEASUREMENT_KEYS, measure_from_label_map, measure_from_masks
+from cvmeasure.synth.generator import FAT, MUSCLE, GeneratorConfig, SheepLoinUltrasoundGenerator
 
 
 def test_measure_known_rectangle():

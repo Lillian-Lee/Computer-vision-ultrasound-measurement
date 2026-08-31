@@ -17,7 +17,8 @@ def main():
     ap.add_argument("--config", default="configs/default.yaml")
     ap.add_argument("--n-animals", type=int, default=None)
     a = ap.parse_args()
-    cfg = yaml.safe_load(open(a.config))
+    with Path(a.config).open(encoding="utf-8") as config_file:
+        cfg = yaml.safe_load(config_file)
     root = Path(cfg["data"]["root"])
     size = cfg["data"]["image_size"]
     n = a.n_animals or cfg["synthetic"]["n_animals"]

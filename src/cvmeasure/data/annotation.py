@@ -22,8 +22,8 @@ Everything written here is compatible with :class:`cvmeasure.data.dataset.LoinUl
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable, Optional
 
 import cv2
 import numpy as np
@@ -37,7 +37,7 @@ DEFAULT_LABEL_MAP = {
 }
 
 
-def _class_of(label: str, label_map: dict) -> Optional[int]:
+def _class_of(label: str, label_map: dict) -> int | None:
     low = label.lower()
     for key, cls in label_map.items():
         if key in low:
@@ -62,7 +62,7 @@ def import_labelme(image_dir: str | Path, out_root: str | Path, pixel_spacing_mm
     (out_root / "masks").mkdir(parents=True, exist_ok=True)
     rows = []
     for js in sorted(image_dir.glob("*.json")):
-        d = json.loads(js.read_text())
+        d = json.loads(js.read_text(encoding="utf-8"))
         img_path = image_dir / d.get("imagePath", js.stem + ".png")
         if not img_path.exists():
             cands = list(image_dir.glob(js.stem + ".*"))
@@ -84,7 +84,7 @@ def import_labelme(image_dir: str | Path, out_root: str | Path, pixel_spacing_mm
 def import_coco(coco_json: str | Path, image_dir: str | Path, out_root: str | Path,
                 pixel_spacing_mm: float | dict | None, label_map: dict = DEFAULT_LABEL_MAP,
                 animal_id_fn=lambda stem: stem.split("_")[0], split_fn=None, seed: int = 0) -> pd.DataFrame:
-    coco = json.loads(Path(coco_json).read_text())
+    coco = json.loads(Path(coco_json).read_text(encoding="utf-8"))
     image_dir, out_root = Path(image_dir), Path(out_root)
     (out_root / "images").mkdir(parents=True, exist_ok=True)
     (out_root / "masks").mkdir(parents=True, exist_ok=True)

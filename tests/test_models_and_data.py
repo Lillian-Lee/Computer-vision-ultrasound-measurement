@@ -1,13 +1,14 @@
 import json
+
 import numpy as np
 import torch
 
-from cvmeasure.models.unet import UNet, DiceCELoss
-from cvmeasure.models.regressor import MeasurementRegressor
-from cvmeasure.data.dataset import write_synthetic_dataset, LoinUltrasoundDataset
 from cvmeasure.data.annotation import import_labelme
+from cvmeasure.data.dataset import LoinUltrasoundDataset, write_synthetic_dataset
+from cvmeasure.metrics import agreement_stats, dice_iou_per_class, lins_ccc
+from cvmeasure.models.regressor import MeasurementRegressor
+from cvmeasure.models.unet import DiceCELoss, UNet
 from cvmeasure.synth.generator import GeneratorConfig
-from cvmeasure.metrics import agreement_stats, lins_ccc, dice_iou_per_class
 
 
 def test_unet_shapes_and_loss():
@@ -45,7 +46,7 @@ def test_labelme_import(tmp_path):
     ann = {"imagePath": "sheep01_f1.png", "shapes": [
         {"label": "eye_muscle", "shape_type": "polygon", "points": [[10, 30], [70, 30], [70, 60], [10, 60]]},
         {"label": "fat", "shape_type": "polygon", "points": [[0, 20], [80, 20], [80, 30], [0, 30]]}]}
-    (img_dir / "sheep01_f1.json").write_text(json.dumps(ann))
+    (img_dir / "sheep01_f1.json").write_text(json.dumps(ann), encoding="utf-8")
     df = import_labelme(img_dir, tmp_path / "ds", pixel_spacing_mm=0.5)
     assert len(df) == 1 and df.animal_id[0] == "sheep01"
     assert abs(df.emd_mm[0] - 15.5) < 1.0 and abs(df.fat_c_mm[0] - 5.0) < 1.0

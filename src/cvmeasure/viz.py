@@ -4,12 +4,13 @@ from __future__ import annotations
 from pathlib import Path
 
 import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
-import numpy as np  # noqa: E402
-import pandas as pd  # noqa: E402
 
-from cvmeasure.measure.measurements import MEASUREMENT_KEYS, MEASUREMENT_LABELS  # noqa: E402
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+from cvmeasure.measure.measurements import MEASUREMENT_KEYS, MEASUREMENT_LABELS
 
 COLORS = {"seg": "#2563EB", "reg": "#F97316", "ref": "#6B7280", "muscle": "#22C55E", "fat": "#FACC15"}
 NAMES = {"seg": "U-Net → measure", "reg": "CNN regression"}
