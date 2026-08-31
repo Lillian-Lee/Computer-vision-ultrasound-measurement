@@ -1,0 +1,7 @@
+seed: 0
+runs_dir: runs_smoke
+data: {root: data/smoke, image_size: 64}
+synthetic: {n_animals: 20, seed: 0}
+seg_model: {name: unet, kwargs: {in_ch: 1, n_classes: 3, base: 4, depth: 3, dropout: 0.0}}
+reg_model: {kwargs: {in_ch: 1, n_outputs: 4, widths: [4, 8, 16]}}
+train: {epochs: 1, batch_size: 4, lr: 0.002, augment: true, num_workers: 0}
