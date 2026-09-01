@@ -24,7 +24,7 @@ the pipeline itself does not care what the organ is.
 | CNN image segmentation (U-Net from scratch; optional ImageNet-pretrained ResNet-18 encoder), Dice + CE loss | `src/cvmeasure/models/unet.py` |
 | Direct-regression CNN baseline and a reasoned comparison of the two approaches | `src/cvmeasure/models/regressor.py`, `docs/03-results.md` |
 | Image synthesis from first principles: speckle via PSF convolution, incidence-angle-dependent specular boundaries, attenuation, acoustic shadow, probe-contact loss | `src/cvmeasure/synth/generator.py` |
-| Dataset engineering: by-animal splits, label-consistent augmentation, annotation import (LabelMe / COCO), pixel-spacing calibration | `src/cvmeasure/data/` |
+| Dataset engineering: by-animal splits, label-consistent augmentation, annotation import (LabelMe / COCO), pixel-spacing calibration | `src/cvmeasure/data/`, [reproducible LabelMe walkthrough](docs/05-annotation-workflow.md) |
 | Geometry from masks → millimetre measurements with QC flags | `src/cvmeasure/measure/measurements.py` |
 | Validation the way method-comparison studies do it: Dice/IoU, bias, MAE, RMSE, R², Lin's CCC, Bland-Altman limits of agreement; domain-shift set; low-data ablation | `src/cvmeasure/metrics.py`, `reports/` |
 | Reproducible engineering: configs, seeds, checkpoints with embedded config, pytest, ruff, GitHub Actions CI with an end-to-end smoke run | `configs/`, `tests/`, `.github/workflows/ci.yml` |
@@ -54,7 +54,7 @@ src/cvmeasure/
 scripts/                  make_dataset.py, make_figures.py
 configs/                  default.yaml (full run), smoke.yaml (CI, 1 min)
 tests/                    pytest unit tests (geometry, generator, models, importer, metrics)
-docs/                     01 domain research (sheep case study) · 02 model card · 03 results · 04 design notes
+docs/                     domain research · model card · results · design notes · LabelMe annotation workflow
 reports/                  metrics.json, per-frame CSV and figures for test + domain-shift sets
 notebooks/                walkthrough notebook
 ```
@@ -102,6 +102,14 @@ work without retraining, e.g.
 `python -m cvmeasure.predict --seg weights/unet_synthetic_v0.1.pt --images <folder> --pixel-spacing 0.42 --out predictions`.
 
 ### Using real annotated frames
+
+For a complete synthetic example that creates LabelMe JSON, imports polygons, preserves
+pixel spacing and animal-level splits, and writes a visual overlay, see the
+[reproducible LabelMe annotation workflow](docs/05-annotation-workflow.md):
+
+```bash
+python scripts/labelme_annotation_walkthrough.py
+```
 
 ```python
 from cvmeasure.data.annotation import import_labelme

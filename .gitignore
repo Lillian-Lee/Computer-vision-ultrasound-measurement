@@ -12,3 +12,4 @@ __pycache__/
 reports/*_lowdata10/figures/
 reports/smoke/
 .ruff_cache/
+artifacts/
