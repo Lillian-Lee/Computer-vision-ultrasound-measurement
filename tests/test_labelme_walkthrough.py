@@ -3,7 +3,7 @@ import json
 import cv2
 import pytest
 
-from scripts.labelme_annotation_walkthrough import SPLITS, build_walkthrough
+from cvmeasure.data.labelme_walkthrough import SPLITS, build_walkthrough
 
 
 def test_synthetic_labelme_walkthrough_roundtrip(tmp_path):
